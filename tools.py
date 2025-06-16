@@ -54,10 +54,8 @@ def get_country_capital(country: str) -> str:
 tools = [get_next_three_dates]
 
 
-
 # Define the LLM (language model)
 llm = ChatOpenAI(model="gpt-4o-2024-11-20", temperature=0)
-
 
 # Main agent: Handles chat and decides when to call advisor
 main_prompt = ChatPromptTemplate.from_messages([
@@ -72,14 +70,12 @@ main_prompt = ChatPromptTemplate.from_messages([
 main_agent = create_openai_tools_agent(llm, tools=[], prompt=main_prompt)
 main_executor = AgentExecutor(agent=main_agent, tools=[], verbose=False)
 
-
 # Memory store for user sessions
 store = {}
 def get_history(session_id):
     if session_id not in store:
         store[session_id] = ChatMessageHistory()
     return store[session_id]
-
 
 
 # Wrap the main agent executor with memory
@@ -105,8 +101,6 @@ advisor_prompt = ChatPromptTemplate.from_messages([
 
 advisor_agent = create_openai_tools_agent(llm, tools, prompt=advisor_prompt)
 advisor_executor = AgentExecutor(agent=advisor_agent, tools=tools, verbose=True)
-
-
 
 def orchestrate_conversation_with_memory(user_input, session_id="user1"):
     """
@@ -141,10 +135,3 @@ orchestrate_conversation_with_memory("Hi! I want to learn about your company.", 
 orchestrate_conversation_with_memory("I'd like to schedule an appointment on 2024-09-02.", session_id=session_id)
 # ...keep calling per turn as needed...
 
-
-
-
-#print('\n\n')
-#print('Agent Response')
-#print(len('Agent Response')*'-')
-#print(response["output"])
