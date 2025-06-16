@@ -22,6 +22,12 @@ def get_next_three_dates(start_date):
     ]
     
     
+@tool
+def end_conversation():
+    """End the conversation with a polite message."""
+    print("Thank you. This concludes our conversation.")
+
+
 
 @tool
 def multiply(a: int) -> int:
@@ -51,7 +57,7 @@ def get_country_capital(country: str) -> str:
 
 # Define the tools
 #tools = [add_numbers, get_country_capital]
-tools = [get_next_three_dates]
+tools = [get_next_three_dates, end_conversation]
 
 
 # Define the LLM (language model)
@@ -60,8 +66,9 @@ llm = ChatOpenAI(model="gpt-4o-2024-11-20", temperature=0)
 # Main agent: Handles chat and decides when to call advisor
 main_prompt = ChatPromptTemplate.from_messages([
     ("system", 
-     "You are an assistant in a company. If the user wants to schedule an appointment, respond: "
-     "'I will check available slots for you.' Otherwise, answer normally."),
+     "You are an assistant in a company."
+     "If the user wants to schedule an appointment, respond: 'I will check available slots for you.' Otherwise, answer normally."
+     "If the user want to end the conversation , respond: 'Thank you. This concludes our conversation'"),
      MessagesPlaceholder(variable_name="history"),
      MessagesPlaceholder(variable_name="agent_scratchpad"),
     ("user", "{input}")
@@ -88,7 +95,7 @@ main_agent_with_memory = RunnableWithMessageHistory(
 
 
 # Advisor agent: Receives the conversation, extracts the desired date, and suggests slots
-advisor_prompt = ChatPromptTemplate.from_messages([
+schedual_advisor_prompt = ChatPromptTemplate.from_messages([
     ("system", 
      "You are an appointment advisor. Extract any preferred dates from the full conversation. "
      "Then, suggest 3 possible appointment slots for the user, in this format:\n"
@@ -99,21 +106,31 @@ advisor_prompt = ChatPromptTemplate.from_messages([
     ("user", "{input}")
 ])
 
-advisor_agent = create_openai_tools_agent(llm, tools, prompt=advisor_prompt)
-advisor_executor = AgentExecutor(agent=advisor_agent, tools=tools, verbose=True)
+schedual_advisor_agent = create_openai_tools_agent(llm, tools, prompt=schedual_advisor_prompt)
+schedual_advisor_executor = AgentExecutor(agent=schedual_advisor_agent, tools=tools, verbose=False)
+
+# Advisor agent: Finish the conversation
+ending_advisor_prompt = ChatPromptTemplate.from_messages([
+    ("system", 
+     "You are an  advisor that finish the conversation"
+     "You can use the tools provided"),
+     MessagesPlaceholder(variable_name="agent_scratchpad"),
+    ("user", "{input}")
+])
+
+ending_advisor_agent = create_openai_tools_agent(llm, tools, prompt=schedual_advisor_prompt)
+ending_advisor_executor = AgentExecutor(agent=schedual_advisor_agent, tools=tools, verbose=False)
+
 
 def orchestrate_conversation_with_memory(user_input, session_id="user1"):
     """
     Handles one turn of user input for the main agent (with memory),
     and if needed, passes the full memory/history to the advisor agent.
     """
-
-
     # Main agent receives latest user message (memory auto-injects context)
     main_output = main_agent_with_memory.invoke({"input": user_input},config={"configurable": {"session_id": session_id}})["output"]
     print("Main Agent:", main_output)
     print("\n")
-
     # If scheduling is detected, advisor gets *full conversation* from memory
     if "I will check available slots for you" in main_output:
         
@@ -121,9 +138,14 @@ def orchestrate_conversation_with_memory(user_input, session_id="user1"):
         full_history = store[session_id].messages
         full_convo = "\n".join([f"{m.type.capitalize()}: {m.content}" for m in full_history])
         
-        advisor_response = advisor_executor.invoke({"input": full_convo})["output"]
+        advisor_response = schedual_advisor_executor.invoke({"input": full_convo})["output"]
         print("\n\n")
         print("Advisor Agent:\n", advisor_response)
+    elif "Thank you. This concludes our conversation" in main_output:
+        full_history = store[session_id].messages
+        full_convo = "\n".join([f"{m.type.capitalize()}: {m.content}" for m in full_history])
+        advisor_response = ending_advisor_executor.invoke({"input": full_convo})["output"]
+        print("\n\n")
         
         
 
@@ -133,5 +155,8 @@ orchestrate_conversation_with_memory("Hi! I want to learn about your company.", 
 
 # Turn 2
 orchestrate_conversation_with_memory("I'd like to schedule an appointment on 2024-09-02.", session_id=session_id)
+# ...keep calling per turn as needed...
+# Turn 3
+orchestrate_conversation_with_memory("Lets finish the conversation", session_id=session_id)
 # ...keep calling per turn as needed...
 
