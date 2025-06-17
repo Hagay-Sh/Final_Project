@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 
 
 @tool
-def get_next_three_dates(start_date):
+def get_next_three_dates(start_date: datetime)-> list:
     'This fuction recieves a date and then return 3 optional dates'
     # start_date should be a string in the format 'YYYY-MM-DD'
     date_obj = datetime.strptime(start_date, "%Y-%m-%d")
@@ -109,17 +109,33 @@ schedual_advisor_prompt = ChatPromptTemplate.from_messages([
 schedual_advisor_agent = create_openai_tools_agent(llm, tools, prompt=schedual_advisor_prompt)
 schedual_advisor_executor = AgentExecutor(agent=schedual_advisor_agent, tools=tools, verbose=False)
 
-# Advisor agent: Finish the conversation
-ending_advisor_prompt = ChatPromptTemplate.from_messages([
+
+# Advisor agent: Info abut the company 
+info_advisor_prompt = ChatPromptTemplate.from_messages([
     ("system", 
      "You are an  advisor that finish the conversation"
+     "If the user wants more information abut the position, respond: 'Certainly! here is  more information abut the position .' Otherwise, answer normally."
      "You can use the tools provided"),
      MessagesPlaceholder(variable_name="agent_scratchpad"),
     ("user", "{input}")
 ])
 
-ending_advisor_agent = create_openai_tools_agent(llm, tools, prompt=schedual_advisor_prompt)
-ending_advisor_executor = AgentExecutor(agent=schedual_advisor_agent, tools=tools, verbose=False)
+info_advisor_agent = create_openai_tools_agent(llm, tools, prompt=info_advisor_prompt)
+info_advisor_executor = AgentExecutor(agent=info_advisor_agent, tools=tools, verbose=False)
+
+
+# Advisor agent: Finish the conversation
+exit_advisor_prompt = ChatPromptTemplate.from_messages([
+    ("system", 
+     "You are an  advisor that finish the conversation"
+     "If the user wants to finish, respond: 'I will check available slots for you.' Otherwise, answer normally."
+     "You can use the tools provided"),
+     MessagesPlaceholder(variable_name="agent_scratchpad"),
+    ("user", "{input}")
+])
+
+exit_advisor_agent = create_openai_tools_agent(llm, tools, prompt=exit_advisor_prompt)
+exit_advisor_executor = AgentExecutor(agent=exit_advisor_agent, tools=tools, verbose=False)
 
 
 def orchestrate_conversation_with_memory(user_input, session_id="user1"):
@@ -133,18 +149,16 @@ def orchestrate_conversation_with_memory(user_input, session_id="user1"):
     print("\n")
     # If scheduling is detected, advisor gets *full conversation* from memory
     if "I will check available slots for you" in main_output:
-        
         # Retrieve full history from memory
         full_history = store[session_id].messages
         full_convo = "\n".join([f"{m.type.capitalize()}: {m.content}" for m in full_history])
-        
         advisor_response = schedual_advisor_executor.invoke({"input": full_convo})["output"]
         print("\n\n")
         print("Advisor Agent:\n", advisor_response)
     elif "Thank you. This concludes our conversation" in main_output:
         full_history = store[session_id].messages
         full_convo = "\n".join([f"{m.type.capitalize()}: {m.content}" for m in full_history])
-        advisor_response = ending_advisor_executor.invoke({"input": full_convo})["output"]
+        advisor_response = exit_advisor_executor.invoke({"input": full_convo})["output"]
         print("\n\n")
         
         
