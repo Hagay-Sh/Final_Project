@@ -1,5 +1,9 @@
 import sqlalchemy as db
 from sqlalchemy import create_engine, text
+from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import Column, Integer, String, create_engine
+import datetime as dt
+from datetime import datetime
 import pandas as pd
 from dotenv import load_dotenv
 import os
@@ -21,4 +25,33 @@ metadata =db.MetaData()
 
 pd.set_option('display.max_rows', None) # --> Code to set the property display.max_rows to None --> it means that we will "see" all rows of the DataFrame in our case "data"
 data = pd.read_sql_query(text("Select * from Schedule"),connection) # --> Query database and save result to a DataFrame
+
+dp = db.Table('Schedule',metadata,autoload_with=engine)
+print(dp.columns.keys())  # --> Table Metadata
+query = db.select(dp)                   # --> query: is the object containing our "select statement" on "dp" object that has "Dim_Products", So "query" = "select * from Dim_Products"
+ResultProxy = connection.execute(query)   # --> ResultProxy: The object returned by the .execute() method. It can be used in a variety of ways to get the data returned by the query
+ResultSet = ResultProxy.fetchall()        # --> The actual data asked for in the query when using a fetch method such as .fetchall() on a ResultProxy.
+
+
+Base = declarative_base()
+
+class Schedule(Base):
+    __tablename__ = 'schedule'
+    ScheduleID = Column(Integer, primary_key=True)
+    date = Column(String)
+    time = Column(String)
+    position = Column(String)
+    available = Column(String)
+
+
+Session = sessionmaker(bind=engine)
+session = Session()
+date_string = "2025-06-18"
+date_object = datetime.strptime(date_string, "%Y-%m-%d").date()
+time_string = "21:21:00"
+time_object = datetime.strptime(time_string, "%H:%M:%S").time()
+new_event = Schedule( date=date_object,time=time_string, position="Team Lead", available=1)
+session.add(new_event)
+session.commit()
+
 
