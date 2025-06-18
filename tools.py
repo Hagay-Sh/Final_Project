@@ -28,33 +28,6 @@ def end_conversation():
     print("Thank you. This concludes our conversation.")
 
 
-
-@tool
-def multiply(a: int) -> int:
-    """Multiply a number by 2."""
-    return a * 2
-
-@tool
-def add(a: int, b: int) -> int:
-    """Add two numbers"""
-    return a + b
-
-
-@tool
-def add_numbers(a: int, b: int) -> int:
-    """Add two numbers and return the result."""
-    return a + b
-
-@tool
-def get_country_capital(country: str) -> str:
-    """Return the capital city of a given country."""
-    capitals = {
-        "France": "Paris",
-        "Israel": "Jerusalem",
-        "USA": "Washington, D.C."
-    }
-    return capitals.get(country, "Unknown")
-
 # Define the tools
 #tools = [add_numbers, get_country_capital]
 tools = [get_next_three_dates, end_conversation]
@@ -110,10 +83,10 @@ schedual_advisor_agent = create_openai_tools_agent(llm, tools, prompt=schedual_a
 schedual_advisor_executor = AgentExecutor(agent=schedual_advisor_agent, tools=tools, verbose=False)
 
 
-# Advisor agent: Info abut the company 
+# Advisor agent: Info abut the position 
 info_advisor_prompt = ChatPromptTemplate.from_messages([
     ("system", 
-     "You are an  advisor that finish the conversation"
+     "You are an  advisor that give additional information about the position."
      "If the user wants more information abut the position, respond: 'Certainly! here is  more information abut the position .' Otherwise, answer normally."
      "You can use the tools provided"),
      MessagesPlaceholder(variable_name="agent_scratchpad"),
