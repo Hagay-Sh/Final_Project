@@ -1,38 +1,11 @@
-from langchain.tools import tool
+import tools_definition as ts
 from langchain_openai import ChatOpenAI
-from langchain_core.output_parsers import StrOutputParser
-from langchain.memory import ChatMessageHistory
-from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain.agents import create_openai_tools_agent, AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain.memory import ChatMessageHistory
-from langchain_core.runnables.history import RunnableWithMessageHistory
-from datetime import datetime, timedelta
-
-
-@tool
-def get_next_three_dates(start_date: datetime)-> list:
-    'This fuction recieves a date and then return 3 optional dates'
-    # start_date should be a string in the format 'YYYY-MM-DD'
-    date_obj = datetime.strptime(start_date, "%Y-%m-%d")
-    return [
-        (date_obj + timedelta(days=3)).strftime("%Y-%m-%d"),
-        (date_obj + timedelta(days=6)).strftime("%Y-%m-%d"),
-        (date_obj + timedelta(days=9)).strftime("%Y-%m-%d"),
-    ]
-    
-    
-@tool
-def end_conversation():
-    """End the conversation with a polite message."""
-    print("Thank you. This concludes our conversation.")
-
+from langchain.agents import create_openai_tools_agent, AgentExecutor
 
 # Define the tools
 #tools = [add_numbers, get_country_capital]
-tools = [get_next_three_dates, end_conversation]
-
-
+tools = [ts.get_next_three_dates, ts.end_conversation]
 # Define the LLM (language model)
 llm = ChatOpenAI(model="gpt-4o-2024-11-20", temperature=0)
 
@@ -49,6 +22,7 @@ main_prompt = ChatPromptTemplate.from_messages([
 
 main_agent = create_openai_tools_agent(llm, tools=[], prompt=main_prompt)
 main_executor = AgentExecutor(agent=main_agent, tools=[], verbose=False)
+
 
 # Memory store for user sessions
 store = {}
@@ -110,7 +84,6 @@ exit_advisor_prompt = ChatPromptTemplate.from_messages([
 exit_advisor_agent = create_openai_tools_agent(llm, tools, prompt=exit_advisor_prompt)
 exit_advisor_executor = AgentExecutor(agent=exit_advisor_agent, tools=tools, verbose=False)
 
-
 def orchestrate_conversation_with_memory(user_input, session_id="user1"):
     """
     Handles one turn of user input for the main agent (with memory),
@@ -136,7 +109,8 @@ def orchestrate_conversation_with_memory(user_input, session_id="user1"):
         
         
 
-session_id = "user77"
+session_id = rnd.randint(1000, 999999)  # Unique session ID for each conversation
+print(f"Session ID: {session_id}\n")
 # Turn 1
 orchestrate_conversation_with_memory("Hi! I want to learn about your company.", session_id=session_id)
 
@@ -146,4 +120,3 @@ orchestrate_conversation_with_memory("I'd like to schedule an appointment on 202
 # Turn 3
 orchestrate_conversation_with_memory("Lets finish the conversation", session_id=session_id)
 # ...keep calling per turn as needed...
-

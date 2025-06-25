@@ -1,8 +1,9 @@
-# %%
+#%%
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+
 
 
 def create_df_stocks(start_date, end_date, size):
@@ -36,35 +37,42 @@ def create_df_stocks(start_date, end_date, size):
     df_stock = df_stock.set_index('Date')
 
     # Pivot for visualization or further analysis
-    pivot_df_stock = df_stock.pivot_table(
-        values='Closed', index=df_stock.index, columns='Stock')
+    pivot_df_stock = df_stock.pivot_table(values='Closed', index=df_stock.index, columns='Stock')
 
     grouped_df_stock = df_stock.groupby('Stock').Closed.mean()
 
-    return (df_stock, pivot_df_stock, grouped_df_stock)
+    return(df_stock, pivot_df_stock, grouped_df_stock)
 
 
-def create_df_map(base_lat, base_lon, num_points, uf_min, uf_max):
+
+
+
+def create_df_map(base_lat,base_lon, num_points, uf_min, uf_max):
     # Base coordinates for London
     base_lat = base_lat
     base_lon = base_lon
 
     # Generate small random offsets around the base location
     num_points = num_points
-    # uniform distribution
-    latitudes = base_lat + np.random.uniform(uf_min, uf_max, size=num_points)
-    # uniform distribution
-    longitudes = base_lon + np.random.uniform(uf_min, uf_max, size=num_points)
+    latitudes = base_lat + np.random.uniform(uf_min, uf_max, size=num_points) # uniform distribution
+    longitudes = base_lon + np.random.uniform(uf_min, uf_max, size=num_points) # uniform distribution
 
     # Create DataFrame
     df = pd.DataFrame({
         'lat': latitudes,
         'lon': longitudes
     })
-    return (df)
+
+    return(df)
+
+
+
 
 
 def create_mat_plot(pivot_df_stock):
+ # Sort index for cleaner plots
+    pivot_df_stock = pivot_df_stock.sort_index()
+
     # Matplotlib Chart
     fig, ax = plt.subplots()
     pivot_df_stock.plot(ax=ax)
@@ -73,21 +81,36 @@ def create_mat_plot(pivot_df_stock):
     ax.set_ylabel("Closed")
     plt.xticks(rotation=45)
 
-    return (fig)
+    return(fig)
 
-    return (fig)
+
+
 
 
 def create_sns_plot(pivot_df_stock):
+ # Sort index for cleaner plots
+    pivot_df_stock = pivot_df_stock.sort_index()
+
+    # Seaborn Chart
+    fig2, ax2 = plt.subplots()
+    sns.lineplot(data=pivot_df_stock, ax=ax2)
     ax2.set_title("Seaborn - Stock Closing Prices")
     plt.xticks(rotation=45)
 
-    return (fig2)
+    return(fig2)
+    
 
 
+
+
+
+#%%
+
+# Creating th df's
+df_stock, pivot_df_stock, grouped_df_stock = create_df_stocks("2024-04-01","2024-06-30", 20)
+df_map = create_df_map(51.5074, -0.1278, 20, -0.01, 0.01)
 # %%
 
-    return (fig2)
-
-
-# %%
+# Creating th fig's
+fig_mat = create_mat_plot(pivot_df_stock)
+fig_sns = create_sns_plot(pivot_df_stock)
