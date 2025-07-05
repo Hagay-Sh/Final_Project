@@ -6,6 +6,17 @@ from datetime import datetime
 import pandas as pd
 from dotenv import load_dotenv
 import os
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
+class User(Base):
+    __tablename__ = 'Schedule'  # name of the table in the DB
+    ScheduleId = Column(Integer, primary_key=True)
+    date = Column(String)
+    time = Column(String)
+    position= Column(String)
+    available = Column(String)  
+
 
 
 def get_schedule()-> list:
@@ -56,11 +67,15 @@ def update_schdual_in_db(booking_details: str)-> str:
     # Using SqlAlchemy we're starting the connection
     engine = db.create_engine(DATABASE_CONNECTION)
     connection = engine.connect()
-    
-    # Update the schedule in the database
-    query = text(f"UPDATE schedule SET available='0' WHERE date={day} and time='{time_s}' and position='{position}';")
-    connection.execute(query)
-    
+    # 2. Create session class
+    Session = sessionmaker(bind=engine)
+
+    # 3. Create session instance
+    session = Session()
+    session.query(User)\
+    .filter(User.date == day, User.time == time_s,User.position == "Python Dev" )\
+    .update({User.available: '0'})
+    session.commit()
     connection.close()  # --> Close the connection to the database
     return "Thank you. The Meeting is Booked."
 

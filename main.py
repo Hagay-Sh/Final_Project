@@ -13,6 +13,6 @@ print(f"Session ID: {session_id}\n")
 
 # The Conversation starts here
 ags.orchestrate_conversation_with_memory("Hi! I want to learn about your company.", session_id=session_id)
-ags.orchestrate_conversation_with_memory("Hi! Iwant to learn abut yoyr services.", session_id=session_id)
+#ags.orchestrate_conversation_with_memory("Hi! Iwant to learn abut yoyr services.", session_id=session_id)
 ags.orchestrate_conversation_with_memory("Hi! i would like to make apointment for interview.", session_id=session_id)
-ags.orchestrate_conversation_with_memory("I'd like to schedule an appointment on 2024-01-02.", session_id=session_id)
+ags.orchestrate_conversation_with_memory("I'd like to schedule the first option", session_id=session_id)
