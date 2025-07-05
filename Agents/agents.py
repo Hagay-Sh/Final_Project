@@ -2,10 +2,13 @@ import tools_definition as ts
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.agents import create_openai_tools_agent, AgentExecutor
+from langchain.memory import ChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
+
 
 # Define the tools
 #tools = [add_numbers, get_country_capital]
-tools = [ts.get_next_three_dates, ts.end_conversation]
+tools = [ts.get_next_three_dates, ts.end_conversation, ts.BookMeetingSchduale]
 # Define the LLM (language model)
 llm = ChatOpenAI(model="gpt-4o-2024-11-20", temperature=0)
 
@@ -14,7 +17,8 @@ main_prompt = ChatPromptTemplate.from_messages([
     ("system", 
      "You are an assistant in a company."
      "If the user wants to schedule an appointment, respond: 'I will check available slots for you.' Otherwise, answer normally."
-     "If the user want to end the conversation , respond: 'Thank you. This concludes our conversation'"),
+     "If the user want to book secifice appointment, respond: 'I will book the appointment for you.'"
+     "If the user want to end the conversation , respond: 'Thank you. This concludes our conversation.'Otherwise, answer normally."),
      MessagesPlaceholder(variable_name="history"),
      MessagesPlaceholder(variable_name="agent_scratchpad"),
     ("user", "{input}")
@@ -57,6 +61,19 @@ schedual_advisor_agent = create_openai_tools_agent(llm, tools, prompt=schedual_a
 schedual_advisor_executor = AgentExecutor(agent=schedual_advisor_agent, tools=tools, verbose=False)
 
 
+# Advisor book agent: Receives the conversation, boook Secicfied appointment to the company calendar
+book_advisor_prompt = ChatPromptTemplate.from_messages([
+    ("system", 
+     "You are an book appointment advisor. after giving an appointment slot, you need to book it in the company calendar."
+     "You can use the tools provided"
+     "If no date is givvven, dont do nothing."),
+     MessagesPlaceholder(variable_name="agent_scratchpad"),
+    ("user", "{input}")
+])
+
+book_advisor_agent = create_openai_tools_agent(llm, tools, prompt=book_advisor_prompt)
+book_advisor_executor = AgentExecutor(agent=book_advisor_agent, tools=tools, verbose=False)
+
 # Advisor agent: Info abut the position 
 info_advisor_prompt = ChatPromptTemplate.from_messages([
     ("system", 
@@ -84,7 +101,7 @@ exit_advisor_prompt = ChatPromptTemplate.from_messages([
 exit_advisor_agent = create_openai_tools_agent(llm, tools, prompt=exit_advisor_prompt)
 exit_advisor_executor = AgentExecutor(agent=exit_advisor_agent, tools=tools, verbose=False)
 
-def orchestrate_conversation_with_memory(user_input, session_id="user1"):
+def orchestrate_conversation_with_memory(user_input, session_id):
     """
     Handles one turn of user input for the main agent (with memory),
     and if needed, passes the full memory/history to the advisor agent.
@@ -101,6 +118,13 @@ def orchestrate_conversation_with_memory(user_input, session_id="user1"):
         advisor_response = schedual_advisor_executor.invoke({"input": full_convo})["output"]
         print("\n\n")
         print("Advisor Agent:\n", advisor_response)
+     
+    elif "I will book the app" in main_output:
+        full_history = store[session_id].messages
+        full_convo = "\n".join([f"{m.type.capitalize()}: {m.content}" for m in full_history])
+        advisor_response = book_advisor_executor.invoke({"input": full_convo})["output"]
+        print("\n\n")
+    
     elif "Thank you. This concludes our conversation" in main_output:
         full_history = store[session_id].messages
         full_convo = "\n".join([f"{m.type.capitalize()}: {m.content}" for m in full_history])
@@ -109,14 +133,14 @@ def orchestrate_conversation_with_memory(user_input, session_id="user1"):
         
         
 
-session_id = rnd.randint(1000, 999999)  # Unique session ID for each conversation
-print(f"Session ID: {session_id}\n")
+#session_id = rnd.randint(1000, 999999)  # Unique session ID for each conversation
+#print(f"Session ID: {session_id}\n")
 # Turn 1
-orchestrate_conversation_with_memory("Hi! I want to learn about your company.", session_id=session_id)
+#orchestrate_conversation_with_memory("Hi! I want to learn about your company.", session_id=session_id)
 
 # Turn 2
-orchestrate_conversation_with_memory("I'd like to schedule an appointment on 2024-09-02.", session_id=session_id)
+#orchestrate_conversation_with_memory("I'd like to schedule an appointment on 2024-09-02.", session_id=session_id)
 # ...keep calling per turn as needed...
 # Turn 3
-orchestrate_conversation_with_memory("Lets finish the conversation", session_id=session_id)
+#orchestrate_conversation_with_memory("Lets finish the conversation", session_id=session_id)
 # ...keep calling per turn as needed...

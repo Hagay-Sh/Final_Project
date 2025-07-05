@@ -1,14 +1,15 @@
 import sqlalchemy as db
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import create_engine, text, update
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from sqlalchemy import Column, Integer, String, create_engine
 from datetime import datetime
 import pandas as pd
 from dotenv import load_dotenv
 import os
 
-def update_schedule( in_date, in_time, in_position, in_available):
-    """This fuction recieves a date and update the sql database with the new schedule"""
+
+def get_schedule()-> list:
+   # """This function retrieves the schedule from the SQL database and returns it as a DataFrame."""
     # Create Connection to Sql Server "Tech"
     SERVER = 'HAGAY_SHMOOL'
     DATABASE = 'Tech'
@@ -19,31 +20,53 @@ def update_schedule( in_date, in_time, in_position, in_available):
     USERNAME = os.getenv('SQL_USERNAME')
     PASSWORD = os.getenv('SQL_PASSWORD')
     DATABASE_CONNECTION = f'mssql://{USERNAME}:{PASSWORD}@{SERVER}/{DATABASE}?driver={DRIVER}'
+    
     # Using SqlAlchemy we're starting the connection
     engine = db.create_engine(DATABASE_CONNECTION)
     connection = engine.connect()
-    Base = declarative_base()
-    class Schedule(Base):
-        __tablename__ = 'schedule'
-        ScheduleID = Column(Integer, primary_key=True)
-        date = Column(String)
-        time = Column(String)
-        position = Column(String)
-        available = Column(String)
-
-    session = sessionmaker(bind=engine)
-    #date_string = "2025-06-18"
-    date_string = in_date
-    date_object = datetime.strptime(date_string, "%Y-%m-%d").date()
-    #time_string = "21:21:00"
-    time_string = in_time
-    time_object = datetime.strptime(time_string, "%H:%M:%S").time()
-    new_event = Schedule( date=date_object,time=time_object, position=in_position, available=in_available)
-    session.add(new_event)
-    session.commit()
-    session.close()
+    
+    # Query database and save result to a DataFrame
+    data = pd.read_sql_query(text("SELECT * FROM schedule where Schedule.available='1' and Schedule.position = 'Python Dev' ORDER BY date ASC, time ASC;"), connection)
+    first_three = data[['ScheduleID','date','time']].head(3).to_records(index=False).tolist()
     connection.close()  # --> Close the connection to the database
-    return
+    return first_three
+
+
+
+
+def update_schdual_in_db(booking_details: str)-> str:
+    """This function receives a booking details string and updates the SQL database with the new schedule.
+    After that the meeting is booked."""
+    tmp_arr = booking_details.split(" ")
+    day = tmp_arr[2]
+    time_s = tmp_arr[4]
+    position = "Python Dev"
+    available = "0"
+    # Create Connection to Sql Server "Tech"
+    SERVER = 'HAGAY_SHMOOL'
+    DATABASE = 'Tech'
+    DRIVER = 'ODBC+Driver+17+for+SQL+Server'
+    # If you want to use environment variables for credentials, uncomment the following lines:  
+    # Load environment variables from .env file
+    load_dotenv()
+    USERNAME = os.getenv('SQL_USERNAME')
+    PASSWORD = os.getenv('SQL_PASSWORD')
+    DATABASE_CONNECTION = f'mssql://{USERNAME}:{PASSWORD}@{SERVER}/{DATABASE}?driver={DRIVER}'
+    
+    # Using SqlAlchemy we're starting the connection
+    engine = db.create_engine(DATABASE_CONNECTION)
+    connection = engine.connect()
+    
+    # Update the schedule in the database
+    query = text(f"UPDATE schedule SET available='0' WHERE date={day} and time='{time_s}' and position='{position}';")
+    connection.execute(query)
+    
+    connection.close()  # --> Close the connection to the database
+    return "Thank you. The Meeting is Booked."
+
+
+
+
 
 
 

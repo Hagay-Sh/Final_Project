@@ -1,11 +1,9 @@
 from datetime import datetime, timedelta
 from langchain.tools import tool
-#from langchain_openai import ChatOpenAI
 
 
-from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain.memory import ChatMessageHistory
-import random as rnd
+
+
 
 @tool
 def get_next_three_dates(start_date: datetime)-> list:
