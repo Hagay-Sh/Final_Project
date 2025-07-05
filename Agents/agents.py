@@ -17,7 +17,7 @@ main_prompt = ChatPromptTemplate.from_messages([
     ("system", 
      "You are an assistant in a company."
      "If the user wants to schedule an appointment, respond: 'I will check available slots for you.' Otherwise, answer normally."
-     "If the user want to book secifice appointment, respond: 'I will book the appointment for you.'"
+     "If the user want to book sepcifice appointment, respond: 'I will book the appointment for you.'"
      "If the user want to end the conversation , respond: 'Thank you. This concludes our conversation.'Otherwise, answer normally."),
      MessagesPlaceholder(variable_name="history"),
      MessagesPlaceholder(variable_name="agent_scratchpad"),
