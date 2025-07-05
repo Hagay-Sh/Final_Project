@@ -1,5 +1,5 @@
 import sqlalchemy as db
-from sqlalchemy import create_engine, text, update
+from sqlalchemy import Date, create_engine, text, update, DateTime, Time
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from sqlalchemy import Column, Integer, String, create_engine
 from datetime import datetime
@@ -12,8 +12,8 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = 'Schedule'  # name of the table in the DB
     ScheduleId = Column(Integer, primary_key=True)
-    date = Column(String)
-    time = Column(String)
+    date = Column(Date)
+    time = Column(Time)
     position= Column(String)
     available = Column(String)  
 
@@ -49,8 +49,10 @@ def update_schdual_in_db(booking_details: str)-> str:
     """This function receives a booking details string and updates the SQL database with the new schedule.
     After that the meeting is booked."""
     tmp_arr = booking_details.split(" ")
-    day = tmp_arr[2]
-    time_s = tmp_arr[4]
+    print(booking_details)
+    day = tmp_arr[0]
+    time_s = tmp_arr[2]
+    id = tmp_arr[4]  # Extracting the ID from the booking details
     position = "Python Dev"
     available = "0"
     # Create Connection to Sql Server "Tech"
@@ -73,8 +75,8 @@ def update_schdual_in_db(booking_details: str)-> str:
     # 3. Create session instance
     session = Session()
     session.query(User)\
-    .filter(User.date == day, User.time == time_s,User.position == "Python Dev" )\
-    .update({User.available: '0'})
+    .filter(User.ScheduleId == id )\
+    .update({User.available:'0'})
     session.commit()
     connection.close()  # --> Close the connection to the database
     return "Thank you. The Meeting is Booked."

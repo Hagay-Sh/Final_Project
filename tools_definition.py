@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from langchain.tools import tool
 from datetime import date
-from SQL import sql as sql
+from modouls.SQL import sql as sql
 #from langchain_openai import ChatOpenAI
 
 
@@ -13,17 +13,17 @@ def get_next_three_dates( )-> list:
     temp_date = lst[0][1].strftime("%Y-%m-%d")
     temp_time = lst[0][2]
     formatted_first_time = temp_time.strftime('%H:%M')
-    first_schedule = f"Option 1: {temp_date} at {formatted_first_time} (ID: {id})"
+    first_schedule = f"Option 1: {temp_date} at {formatted_first_time} ID: {id}"
     id= lst[1][0]
     temp_date = lst[1][1].strftime("%Y-%m-%d")
     temp_time = lst[1][2]
     formatted_first_time = temp_time.strftime('%H:%M')
-    second_schedule = f"Option 2: {temp_date} at {formatted_first_time} (ID: {id})"
+    second_schedule = f"Option 2: {temp_date} at {formatted_first_time} ID: {id}"
     id= lst[2][0]
     temp_date = lst[2][1].strftime("%Y-%m-%d")
     temp_time = lst[2][2]
     formatted_first_time = temp_time.strftime('%H:%M')
-    third_schedule = f"Option 3: {temp_date} at {formatted_first_time} (ID: {id})"
+    third_schedule = f"Option 3: {temp_date} at {formatted_first_time} ID: {id}"
     return [
         first_schedule,
         second_schedule,
@@ -48,9 +48,11 @@ def end_conversation():
 
 @tool
 def BookMeetingSchduale(booking_details: str)-> str:
-    """this fuction get an scheduale option and update it in the comppany calendar.
+    """this fuction get an scheduale slot and update it in the comppany calendar.
     After that the meeting is booked."""
     sql.update_schdual_in_db(booking_details)
+    msg = f"Thank you. The Meeting is Booked.\n{booking_details}"
+    return msg
     #print("Thank you. The Meeting is Booked.")
 
 

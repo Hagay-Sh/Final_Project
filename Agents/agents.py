@@ -1,4 +1,4 @@
-import tools_definition as ts
+import modouls.tools_definition as ts
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.agents import create_openai_tools_agent, AgentExecutor
@@ -65,8 +65,10 @@ schedual_advisor_executor = AgentExecutor(agent=schedual_advisor_agent, tools=to
 book_advisor_prompt = ChatPromptTemplate.from_messages([
     ("system", 
      "You are an book appointment advisor. after giving an appointment slot, you need to book it in the company calendar."
+     "Arrange the slot in this format: '2024-01-02 at 16:00 ID: 7309'"
      "You can use the tools provided"
-     "If no date is givvven, dont do nothing."),
+     "If no date is given,  do nothing."
+     "respond: 'I will book the appointment for you.' Otherwise, answer normally."),
      MessagesPlaceholder(variable_name="agent_scratchpad"),
     ("user", "{input}")
 ])
@@ -101,13 +103,15 @@ exit_advisor_prompt = ChatPromptTemplate.from_messages([
 exit_advisor_agent = create_openai_tools_agent(llm, tools, prompt=exit_advisor_prompt)
 exit_advisor_executor = AgentExecutor(agent=exit_advisor_agent, tools=tools, verbose=False)
 
-def orchestrate_conversation_with_memory(user_input, session_id):
+def orchestrate_conversation_with_memory(user_input, session_id)-> str:
     """
     Handles one turn of user input for the main agent (with memory),
     and if needed, passes the full memory/history to the advisor agent.
     """
     # Main agent receives latest user message (memory auto-injects context)
     main_output = main_agent_with_memory.invoke({"input": user_input},config={"configurable": {"session_id": session_id}})["output"]
+    user_output = main_output  # Default to main agent's response
+    advisor_response = ""  # Initialize advisor response
     print("Main Agent:", main_output)
     print("\n")
     # If scheduling is detected, advisor gets *full conversation* from memory
@@ -130,8 +134,9 @@ def orchestrate_conversation_with_memory(user_input, session_id):
         full_convo = "\n".join([f"{m.type.capitalize()}: {m.content}" for m in full_history])
         advisor_response = exit_advisor_executor.invoke({"input": full_convo})["output"]
         print("\n\n")
-        
-        
+    if len(advisor_response) > 0:
+        user_output = advisor_response   
+    return user_output  
 
 #session_id = rnd.randint(1000, 999999)  # Unique session ID for each conversation
 #print(f"Session ID: {session_id}\n")
