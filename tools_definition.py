@@ -16,17 +16,17 @@ def get_next_three_dates( )-> list:
     temp_date = lst[0][1].strftime("%Y-%m-%d")
     temp_time = lst[0][2]
     formatted_first_time = temp_time.strftime('%H:%M')
-    first_schedule = f"Option 1: {temp_date} at {formatted_first_time} ID: {id}"
+    first_schedule = f"{temp_date} at {formatted_first_time} ID: {id}"
     id= lst[1][0]
     temp_date = lst[1][1].strftime("%Y-%m-%d")
     temp_time = lst[1][2]
     formatted_first_time = temp_time.strftime('%H:%M')
-    second_schedule = f"Option 2: {temp_date} at {formatted_first_time} ID: {id}"
+    second_schedule = f"{temp_date} at {formatted_first_time} ID: {id}"
     id= lst[2][0]
     temp_date = lst[2][1].strftime("%Y-%m-%d")
     temp_time = lst[2][2]
     formatted_first_time = temp_time.strftime('%H:%M')
-    third_schedule = f"Option 3: {temp_date} at {formatted_first_time} ID: {id}"
+    third_schedule = f"{temp_date} at {formatted_first_time} ID: {id}"
     return [
         first_schedule,
         second_schedule,

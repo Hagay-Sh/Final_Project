@@ -66,7 +66,7 @@ schedual_advisor_executor = AgentExecutor(agent=schedual_advisor_agent, tools=to
 book_advisor_prompt = ChatPromptTemplate.from_messages([
     ("system", 
      "You are an book appointment advisor. after giving an appointment slot, you need to book it in the company calendar."
-     "It is Mandatory to Arrange the input in this format: '2024-01-02 at 16:00 ID: 7309'"
+     "Arrange the input in this format: '2024-01-02 at 16:00 ID: 7309'"
      "You can use the tools provided"
      "If no date is given,  do nothing."
      "If no error occure in the booking process, respond: 'Thank you. The Meeting is Booked.'"

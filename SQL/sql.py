@@ -66,13 +66,11 @@ def update_schdual_in_db(booking_details: str)-> str:
     USERNAME = os.getenv('SQL_USERNAME')
     PASSWORD = os.getenv('SQL_PASSWORD')
     DATABASE_CONNECTION = f'mssql://{USERNAME}:{PASSWORD}@{SERVER}/{DATABASE}?driver={DRIVER}'
-    
     # Using SqlAlchemy we're starting the connection
     engine = db.create_engine(DATABASE_CONNECTION)
     connection = engine.connect()
     # 2. Create session class
     Session = sessionmaker(bind=engine)
-
     # 3. Create session instance
     if 'ID' in booking_details:
         session = Session()
@@ -86,6 +84,7 @@ def update_schdual_in_db(booking_details: str)-> str:
         .filter(User.date == day and User.time == time_s)\
         .update({User.date: day, User.time: time_s, User.position: position, User.available: available})
         session.commit()
+    
     connection.close()  # --> Close the connection to the database
     return "Thank you. The Meeting is Booked."
 
