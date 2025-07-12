@@ -8,6 +8,8 @@ from modouls.SQL import sql as sql
 @tool
 def get_next_three_dates( )-> list:
     """This fuction return 3 optional dates From Comapny Schedual Table.
+    Dont use this function for booking an appointment.
+    the output is a list of 3 strings, each string is a date in the format: 'Option 1: YYYY-MM-DD at HH:MM ID: 1234'.
     This Function is not booking any appointment, just returning the next 3 available dates."""
     lst = sql.get_schedule()
     id = lst[0][0]

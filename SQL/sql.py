@@ -18,7 +18,6 @@ class User(Base):
     available = Column(String)  
 
 
-
 def get_schedule()-> list:
    # """This function retrieves the schedule from the SQL database and returns it as a DataFrame."""
     # Create Connection to Sql Server "Tech"
@@ -48,11 +47,13 @@ def get_schedule()-> list:
 def update_schdual_in_db(booking_details: str)-> str:
     """This function receives a booking details string and updates the SQL database with the new schedule.
     After that the meeting is booked."""
+    
     tmp_arr = booking_details.split(" ")
-    print(booking_details)
+    #print(booking_details)
     day = tmp_arr[0]
     time_s = tmp_arr[2]
-    id = tmp_arr[4]  # Extracting the ID from the booking details
+    if 'ID' in booking_details:
+        id = tmp_arr[4]  # Extracting the ID from the booking details
     position = "Python Dev"
     available = "0"
     # Create Connection to Sql Server "Tech"
@@ -73,11 +74,18 @@ def update_schdual_in_db(booking_details: str)-> str:
     Session = sessionmaker(bind=engine)
 
     # 3. Create session instance
-    session = Session()
-    session.query(User)\
-    .filter(User.ScheduleId == id )\
-    .update({User.available:'0'})
-    session.commit()
+    if 'ID' in booking_details:
+        session = Session()
+        session.query(User)\
+        .filter(User.ScheduleId == id )\
+        .update({User.date: day, User.time: time_s, User.position: position, User.available: available})
+        session.commit()
+    else:
+        session = Session()
+        session.query(User)\
+        .filter(User.date == day and User.time == time_s)\
+        .update({User.date: day, User.time: time_s, User.position: position, User.available: available})
+        session.commit()
     connection.close()  # --> Close the connection to the database
     return "Thank you. The Meeting is Booked."
 

@@ -15,10 +15,11 @@ llm = ChatOpenAI(model="gpt-4o-2024-11-20", temperature=0)
 # Main agent: Handles chat and decides when to call advisor
 main_prompt = ChatPromptTemplate.from_messages([
     ("system", 
-     "You are an assistant in a company."
+     "You are an assistant in a softare company that recruit for python developer position."
      "If the user wants to schedule an appointment, respond: 'I will check available slots for you.' Otherwise, answer normally."
      "If the user want to book sepcifice appointment, respond: 'I will book the appointment for you.'"
-     "If the user want to end the conversation , respond: 'Thank you. This concludes our conversation.'Otherwise, answer normally."),
+     "If the user wants to know more about the position, respond: 'Certainly! Here is more information about the position.'"
+     "If the user want to finfish  the conversation , respond: 'Thank you. This concludes our conversation.'Otherwise, answer normally."),
      MessagesPlaceholder(variable_name="history"),
      MessagesPlaceholder(variable_name="agent_scratchpad"),
     ("user", "{input}")
@@ -65,10 +66,12 @@ schedual_advisor_executor = AgentExecutor(agent=schedual_advisor_agent, tools=to
 book_advisor_prompt = ChatPromptTemplate.from_messages([
     ("system", 
      "You are an book appointment advisor. after giving an appointment slot, you need to book it in the company calendar."
-     "Arrange the slot in this format: '2024-01-02 at 16:00 ID: 7309'"
+     "It is Mandatory to Arrange the input in this format: '2024-01-02 at 16:00 ID: 7309'"
      "You can use the tools provided"
      "If no date is given,  do nothing."
-     "respond: 'I will book the appointment for you.' Otherwise, answer normally."),
+     "If no error occure in the booking process, respond: 'Thank you. The Meeting is Booked.'"
+     "If  error occure in the booking process, respond: 'Error Occure . Lets try later.'"
+     "Otherwise, answer normally."),
      MessagesPlaceholder(variable_name="agent_scratchpad"),
     ("user", "{input}")
 ])
@@ -79,9 +82,11 @@ book_advisor_executor = AgentExecutor(agent=book_advisor_agent, tools=tools, ver
 # Advisor agent: Info abut the position 
 info_advisor_prompt = ChatPromptTemplate.from_messages([
     ("system", 
-     "You are an  advisor that give additional information about the position."
-     "If the user wants more information abut the position, respond: 'Certainly! here is  more information abut the position .' Otherwise, answer normally."
-     "You can use the tools provided"),
+    "You are an  advisor that give additional information about the position. and aim  to achedual ameeting with the user."
+    "If the user wants to know more about the position,provide any information you have abut it.'"
+    "The Position is a Python Developrt in software company in the usa."
+   # "If the user didnt suggest to schedual ameeting , respond: 'Certainly! Can i Suggest you to schedual a meeting .' Otherwise, answer normally."
+    "You can use the tools provided"),
      MessagesPlaceholder(variable_name="agent_scratchpad"),
     ("user", "{input}")
 ])
@@ -102,6 +107,8 @@ exit_advisor_prompt = ChatPromptTemplate.from_messages([
 
 exit_advisor_agent = create_openai_tools_agent(llm, tools, prompt=exit_advisor_prompt)
 exit_advisor_executor = AgentExecutor(agent=exit_advisor_agent, tools=tools, verbose=False)
+
+
 
 def orchestrate_conversation_with_memory(user_input, session_id)-> str:
     """
@@ -128,12 +135,21 @@ def orchestrate_conversation_with_memory(user_input, session_id)-> str:
         full_convo = "\n".join([f"{m.type.capitalize()}: {m.content}" for m in full_history])
         advisor_response = book_advisor_executor.invoke({"input": full_convo})["output"]
         print("\n\n")
+        print("Advisor Agent:\n", advisor_response)
     
     elif "Thank you. This concludes our conversation" in main_output:
         full_history = store[session_id].messages
         full_convo = "\n".join([f"{m.type.capitalize()}: {m.content}" for m in full_history])
         advisor_response = exit_advisor_executor.invoke({"input": full_convo})["output"]
         print("\n\n")
+        print("Advisor Agent:\n", advisor_response)
+    elif "Certainly! Here is more information about the position" in main_output:
+        full_history = store[session_id].messages
+        full_convo = "\n".join([f"{m.type.capitalize()}: {m.content}" for m in full_history])
+        advisor_response = info_advisor_executor.invoke({"input": full_convo})["output"]
+        print("\n\n")
+        print("Advisor Agent:\n", advisor_response)
+
     if len(advisor_response) > 0:
         user_output = advisor_response   
     return user_output  
