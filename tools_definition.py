@@ -7,7 +7,8 @@ from modouls.SQL import sql as sql
 
 @tool
 def get_next_three_dates( )-> list:
-    """This fuction return 3 optional dates From Comapny Schedual Table."""
+    """This fuction return 3 optional dates From Comapny Schedual Table.
+    This Function is not booking any appointment, just returning the next 3 available dates."""
     lst = sql.get_schedule()
     id = lst[0][0]
     temp_date = lst[0][1].strftime("%Y-%m-%d")
@@ -49,6 +50,7 @@ def end_conversation():
 @tool
 def BookMeetingSchduale(booking_details: str)-> str:
     """this fuction get an scheduale slot and update it in the comppany calendar.
+    Use this function for booking an appointment.
     After that the meeting is booked."""
     sql.update_schdual_in_db(booking_details)
     msg = f"Thank you. The Meeting is Booked.\n{booking_details}"
